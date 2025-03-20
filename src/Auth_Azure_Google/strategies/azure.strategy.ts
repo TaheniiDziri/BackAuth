@@ -1,33 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ConfigService } from '@nestjs/config';
-import { OIDCStrategy } from 'passport-azure-ad';
+import { OIDCStrategy } from 'passport-azure-ad'; // Use OIDCStrategy
+import { AuthService } from '../auth.service';
 
 @Injectable()
-export class AzureAuthStrategy extends PassportStrategy(OIDCStrategy, 'azure') {
-  constructor(private configService: ConfigService) {
-    const redirectUrl = process.env.AZURE_REDIRECT_URL;
-
-    if (!redirectUrl) {
-      throw new Error('Redirect URL is not defined in the environment variables');
-    }
-
-    console.log('Redirect URL:', redirectUrl);
-
+export class AzureStrategy extends PassportStrategy(OIDCStrategy, 'azuread') {
+  constructor(private authService: AuthService) {
     super({
-      clientID: process.env.AZURE_CLIENT_ID,
-      clientSecret: process.env.AZURE_CLIENT_SECRET,
-      identityMetadata: `https://login.microsoftonline.com/${process.env.AZURE_TENANT_ID}/.well-known/openid-configuration`,
+      identityMetadata: `https://login.microsoftonline.com/${process.env.AZURE_TENANT_ID}/v2.0/.well-known/openid-configuration`,
+      clientID: process.env.AZURE_CLIENT_ID as string,
+      clientSecret: process.env.AZURE_CLIENT_SECRET as string,
       responseType: 'code',
       responseMode: 'query',
-      redirectUrl,
+      redirectUrl: process.env.AZURE_REDIRECT_URI as string,
       scope: ['openid', 'profile', 'email'],
-      passReqToCallback: true,
-      allowHttpForRedirectUrl: true,
+      allowHttpForRedirectUrl: true, // Allow non-HTTPS redirect URIs (for development only)
+      passReqToCallback: true, // Add this property
     });
   }
 
-  validate(payload: any) {
-    return payload;
+  async validate(req: any, iss: string, sub: string, profile: any, done: Function) {
+    const user = await this.authService.validateAzureToken(profile.oid); // Use profile.oid or profile.id_token
+    done(null, user);
   }
 }

@@ -65,6 +65,7 @@
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.10.7",
+    "@types/passport-azure-ad": "^4.3.6",
     "@types/passport-github": "^1.1.12",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",

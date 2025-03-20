@@ -1,45 +1,55 @@
-import { ExtractJwt, Strategy } from 'passport-jwt';
+/*import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User } from '../users/entities/user.entity';
-
-export type JwtPayload = {
-  sub: string;
-  email: string;
-};
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { ConfigService } from '@nestjs/config';
+import { UsersService } from '../users/users.service'; // Service pour récupérer l'utilisateur à partir de la base de données
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    @InjectModel(User.name) private userModel: Model<User>,
+    private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
   ) {
-    const extractJwtFromRequest = (req) => {
-      let token = null;
-      if (req && req.cookies) {
-        token = req.cookies['access_token'];
-      }
-      return token || ExtractJwt.fromAuthHeaderAsBearerToken()(req);
-    };
-
     super({
-      ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'defaultsecret',  // Utilisez la clé de l'environnement
-      jwtFromRequest: extractJwtFromRequest,
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: configService.get<string>('JWT_SECRET'),
     });
   }
 
-  async validate(payload: JwtPayload) {
-    const user = await this.userModel.findById(payload.sub);
-
+  async validate(payload: any) {
+    const user = await this.usersService.findById(payload.sub); // `sub` est l'ID utilisateur contenu dans le token
     if (!user) {
-      throw new UnauthorizedException('Please log in to continue');
+      throw new Error('User not found');
     }
+    return user;
+  }
+}*/
 
-    return {
-      id: payload.sub,
-      email: payload.email,
-    };
+// src/Auth_Azure_Google/strategies/jwt.strategy.ts
+// src/Auth_Azure_Google/strategies/jwt.strategy.ts
+import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { ConfigService } from '@nestjs/config';
+import { UsersService } from '../users/users.service';
+
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
+  ) {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: configService.get<string>('JWT_SECRET'),
+    });
+  }
+
+  async validate(payload: any) {
+    const user = await this.usersService.findById(payload.sub); // Use the `findById` method
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
   }
 }

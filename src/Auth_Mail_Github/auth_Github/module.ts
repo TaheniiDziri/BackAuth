@@ -1,27 +1,22 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigModule } from '@nestjs/config';
+import { HttpModule } from '@nestjs/axios';
+import { AuthController } from './controller';
 import { AuthService } from './service';
-import { GithubAuthController } from './controller';
-import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
-import { GithubStrategy } from './strategies/github.strategy';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { HttpModule } from '@nestjs/axios';  // Importez HttpModule
-
+import { UserProfil, UserSchemaProfil } from './user/schemagit';
+ 
 @Module({
   imports: [
-    PassportModule,
-    ConfigModule,
-    HttpModule,  // Ajoutez HttpModule ici
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: configService.get<string>('JWT_EXPIRES_IN') },
-      }),
+    ConfigModule.forRoot({
+      isGlobal: true,
     }),
+    HttpModule,
+    MongooseModule.forFeature([
+      { name: UserProfil.name, schema: UserSchemaProfil },
+    ]),
   ],
-  controllers: [GithubAuthController],
-  providers: [AuthService, GithubStrategy],
+  controllers: [AuthController],
+  providers: [AuthService],
 })
 export class AuthModuleGithub {}

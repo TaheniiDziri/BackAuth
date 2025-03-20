@@ -17,8 +17,8 @@ import { CoopCoepMiddleware } from './coop-coep.middleware'; // Importer le midd
     UsersModule,
     AuthModule,
     AuthModuleGithub,
-    AuthModuleEmail, // Corrige la faute de frappe
-    UserModuleEmail,  // Assurez-vous que ce module existe réellement
+    AuthModuleEmail, 
+    UserModuleEmail,  
   ],
 })
 export class AppModule {
